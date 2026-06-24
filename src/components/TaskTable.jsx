@@ -1,4 +1,4 @@
-export default function TaskTable({ tasks = [], onView }) {
+export default function TaskTable({ tasks = [], onView, isAdmin }) {
   if (!Array.isArray(tasks)) {
     return <h5>No tasks available</h5>;
   }
@@ -17,7 +17,9 @@ export default function TaskTable({ tasks = [], onView }) {
               <th>Status</th>
               <th>Start</th>
               <th>End</th>
-              <th>Actions</th>
+
+              {/* ONLY ADMIN */}
+              {isAdmin && <th>Actions</th>}
             </tr>
           </thead>
 
@@ -43,14 +45,16 @@ export default function TaskTable({ tasks = [], onView }) {
                 <td>{task.startDate}</td>
                 <td>{task.endDate}</td>
 
-                <td>
-                  <button
-                    className="btn btn-sm btn-outline-primary"
-                    onClick={() => onView(task)}
-                  >
-                    View
-                  </button>
-                </td>
+                {isAdmin && (
+                  <td>
+                    <button
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={() => onView(task)}
+                    >
+                      View
+                    </button>
+                  </td>
+                )}
 
               </tr>
             ))}

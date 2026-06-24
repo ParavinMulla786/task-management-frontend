@@ -17,63 +17,97 @@ export default function InProgressTasks() {
 
       console.log("InProgress API:", res.data);
 
-      // backend response: { success, data: [] }
-      const data = res.data.data || [];
+      const data = res?.data?.data || [];
 
       setTasks(Array.isArray(data) ? data : []);
-
-      setLoading(false);
     } catch (error) {
       console.log("InProgress Error:", error);
       setTasks([]);
+    } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <h5>Loading In Progress Tasks...</h5>;
+  if (loading) {
+    return (
+      <div className="text-center py-4">
+        <h5>🔵 Loading In Progress Tasks...</h5>
+      </div>
+    );
+  }
 
   return (
-    <div className="container">
+    <div className="container-fluid py-3">
 
-      <h3 className="mb-3">🔵 In Progress Tasks</h3>
+      {/* HEADER */}
+      <div className="mb-3">
+        <h3 className="fw-bold">
+          🔵 In Progress Tasks
+        </h3>
+        <p className="text-muted">
+          Tasks currently being worked on
+        </p>
+      </div>
 
-      <div className="card shadow-sm">
+      {/* TABLE CARD */}
+      <div className="card border-0 shadow-sm">
 
-        <div className="card-body p-0">
+        <div className="table-responsive">
 
-          <table className="table table-hover mb-0">
+          <table className="table table-hover align-middle mb-0">
 
             <thead className="table-light">
               <tr>
                 <th>#</th>
                 <th>Title</th>
                 <th>Status</th>
-                <th>Start</th>
-                <th>End</th>
+                <th>Start Date</th>
+                <th>End Date</th>
               </tr>
             </thead>
 
             <tbody>
               {tasks.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center">
-                    No In Progress Tasks
+                  <td
+                    colSpan="5"
+                    className="text-center p-4 text-muted"
+                  >
+                    No In Progress Tasks Found
                   </td>
                 </tr>
               ) : (
                 tasks.map((task, index) => (
                   <tr key={task.id}>
+
                     <td>{index + 1}</td>
-                    <td>{task.title}</td>
+
+                    <td className="fw-semibold">
+                      {task.title}
+                    </td>
 
                     <td>
-                      <span className="badge bg-primary">
+                      <span className="badge bg-info">
                         {task.status}
                       </span>
                     </td>
 
-                    <td>{task.startDate}</td>
-                    <td>{task.endDate}</td>
+                    <td>
+                      {task.startDate
+                        ? new Date(
+                            task.startDate
+                          ).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+
+                    <td>
+                      {task.endDate
+                        ? new Date(
+                            task.endDate
+                          ).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+
                   </tr>
                 ))
               )}
@@ -82,9 +116,7 @@ export default function InProgressTasks() {
           </table>
 
         </div>
-
       </div>
-
     </div>
   );
 }

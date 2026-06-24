@@ -12,62 +12,134 @@ export default function AddTask() {
     endDate: "",
   });
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      setLoading(true);
+      setError("");
+
+      if (!form.title || !form.description) {
+        setError("Title and Description are required");
+        return;
+      }
+
       await createTask(form);
+
       navigate("/tasks");
     } catch (err) {
       console.log(err);
+      setError(
+        err?.response?.data?.msg ||
+          "Failed to create task"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container">
+    <div className="container py-4">
 
-      <h3>➕ Add Task</h3>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h3 className="fw-bold">➕ Add New Task</h3>
 
-      <form className="card p-4 shadow" onSubmit={handleSubmit}>
-
-        <input
-          name="title"
-          className="form-control mb-2"
-          placeholder="Title"
-          onChange={handleChange}
-        />
-
-        <textarea
-          name="description"
-          className="form-control mb-2"
-          placeholder="Description"
-          onChange={handleChange}
-        />
-
-        <input
-          type="date"
-          name="startDate"
-          className="form-control mb-2"
-          onChange={handleChange}
-        />
-
-        <input
-          type="date"
-          name="endDate"
-          className="form-control mb-3"
-          onChange={handleChange}
-        />
-
-        <button className="btn btn-success w-100">
-          Create Task
+        <button
+          className="btn btn-outline-secondary btn-sm"
+          onClick={() => navigate("/")}
+        >
+          ← Back
         </button>
+      </div>
 
-      </form>
+      <div className="card shadow-sm border-0 p-4">
 
+        {error && (
+          <div className="alert alert-danger py-2">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+
+          {/* TITLE */}
+          <div className="mb-3">
+            <label className="form-label">
+              Title
+            </label>
+            <input
+              name="title"
+              className="form-control"
+              placeholder="Enter task title"
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          {/* DESCRIPTION */}
+          <div className="mb-3">
+            <label className="form-label">
+              Description
+            </label>
+            <textarea
+              name="description"
+              className="form-control"
+              placeholder="Enter task description"
+              rows="3"
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          {/* DATES */}
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label className="form-label">
+                Start Date
+              </label>
+              <input
+                type="date"
+                name="startDate"
+                className="form-control"
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="col-md-6 mb-3">
+              <label className="form-label">
+                End Date
+              </label>
+              <input
+                type="date"
+                name="endDate"
+                className="form-control"
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          {/* BUTTON */}
+          <button
+            className="btn btn-success w-100"
+            disabled={loading}
+          >
+            {loading
+              ? "Creating..."
+              : "Create Task"}
+          </button>
+
+        </form>
+      </div>
     </div>
   );
 }

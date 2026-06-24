@@ -8,9 +8,16 @@ export const registerUser = (data) =>
 export const loginUser = async (data) => {
   const res = await api.post("/user/login", data);
 
-  // SAVE TOKEN (VERY IMPORTANT)
   if (res.data.token) {
     localStorage.setItem("token", res.data.token);
+  }
+
+  // SAVE USER DATA
+  if (res.data.data) {
+    localStorage.setItem(
+      "user",
+      JSON.stringify(res.data.data)
+    );
   }
 
   return res;
@@ -19,4 +26,5 @@ export const loginUser = async (data) => {
 // LOGOUT
 export const logoutUser = () => {
   localStorage.removeItem("token");
+  localStorage.removeItem("user");
 };

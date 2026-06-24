@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { getAllTasks } from "../services/taskService";
+import { getTasksByUser } from "../services/taskService";
+import TaskModal from "../components/TaskModal";
 
 export default function AllTasks() {
   const [tasks, setTasks] = useState([]);
+  const [selectedTask, setSelectedTask] = useState(null);
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     loadTasks();
@@ -10,17 +16,28 @@ export default function AllTasks() {
 
   const loadTasks = async () => {
     try {
-      const res = await getAllTasks();
+      let res;
 
-      console.log("FULL API RESPONSE:", res.data);
+      if (isAdmin) {
+        // 👑 ADMIN → ALL TASKS
+        res = await getAllTasks();
+        setTasks(res.data.data || []);
+      } else {
+        // 👤 USER → ONLY ASSIGNED TASKS
+        res = await getTasksByUser();
 
-      // ✅ SAFE FIX (IMPORTANT)
-      const taskArray = res.data.data || [];
+        // backend returns: { getTasks: [...] }
+        const assignedTasks = res?.data?.getTasks || [];
 
-      setTasks(Array.isArray(taskArray) ? taskArray : []);
+        // extract actual tasks from include
+        const tasksOnly = assignedTasks.map(
+          (item) => item.Task
+        );
 
-    } catch (error) {
-      console.log(error);
+        setTasks(tasksOnly);
+      }
+    } catch (err) {
+      console.log(err);
       setTasks([]);
     }
   };
@@ -28,7 +45,9 @@ export default function AllTasks() {
   return (
     <div className="container">
 
-      <h3>📋 All Tasks</h3>
+      <h3>
+        {isAdmin ? "📋 All Tasks" : "📋 My Assigned Tasks"}
+      </h3>
 
       <table className="table table-bordered mt-3">
         <thead>
@@ -38,11 +57,18 @@ export default function AllTasks() {
             <th>Status</th>
             <th>Start</th>
             <th>End</th>
+            <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          {Array.isArray(tasks) &&
+          {tasks.length === 0 ? (
+            <tr>
+              <td colSpan="6" className="text-center">
+                No Tasks Found
+              </td>
+            </tr>
+          ) : (
             tasks.map((task, index) => (
               <tr key={task.id}>
                 <td>{index + 1}</td>
@@ -50,11 +76,28 @@ export default function AllTasks() {
                 <td>{task.status}</td>
                 <td>{task.startDate}</td>
                 <td>{task.endDate}</td>
+
+                <td>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => setSelectedTask(task)}
+                  >
+                    View Details
+                  </button>
+                </td>
               </tr>
-            ))}
+            ))
+          )}
         </tbody>
       </table>
 
+      {/* MODAL */}
+      <TaskModal
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        isAdmin={isAdmin}
+        refresh={loadTasks}
+      />
     </div>
   );
 }

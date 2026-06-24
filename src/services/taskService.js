@@ -39,3 +39,21 @@ export const getByStatus = (status) =>
 
 export const getByMonth = (month) =>
   api.get(`/task/gettasksbyselectedmonth?month=${month}`);
+
+
+export const assignTask = (taskID, userID) => {
+  console.log("ASSIGN API HIT", taskID, userID);
+
+  return api.post("/assign-task/assign-task", {
+    taskID,
+    userID,
+  });
+};
+  // USERS
+
+
+// taskService.js
+
+// GET TASKS ASSIGNED TO LOGGED-IN USER
+export const getTasksByUser = () =>
+  api.get("/assign-task/get-tasks-by-user");

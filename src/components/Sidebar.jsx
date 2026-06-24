@@ -1,109 +1,105 @@
 import { NavLink } from "react-router-dom";
-import { getUserInfo } from "../services/userService";
-import { useEffect, useState } from "react";
 
 export default function Sidebar() {
-  const [user, setUser] = useState(null);
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const linkClass = ({ isActive }) =>
-    `list-group-item bg-dark text-light border-0 ${
-      isActive ? "text-primary fw-bold" : "text-secondary"
+    `list-group-item border-0 rounded mb-2 ${
+      isActive
+        ? "bg-primary text-white fw-semibold"
+        : "bg-transparent text-light"
     }`;
 
-  async function createUser() {
-    try {
-      const res = await getUserInfo();
-
-      console.log("Response:", res.data);
-
-      setUser(res.data.data); // <- important
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  useEffect(() => {
-    createUser();
-  }, []);
-
   return (
-    <div className="p-3 text-white">
+    <div className="p-3 text-white h-100">
 
-      {/* Header */}
-      <h4 className="fw-bold mb-4">Task Manager</h4>
+      {/* Logo */}
+      <div className="mb-4">
+        <h4 className="fw-bold">📋 Task Manager</h4>
+      </div>
 
       {/* User Info */}
-      {user && (
-        <div className="mb-4">
-          <h6>{user.name}</h6>
-          <span className="badge bg-primary">
-            {user.role}
-          </span>
-        </div>
-      )}
+      <div className="mb-4 p-3 rounded bg-dark">
+        <small className="text-secondary">Logged in as</small>
 
-      <small className="text-secondary">Navigation</small>
+        <h6 className="mb-1 mt-1">
+          {user?.name}
+        </h6>
+
+        <span
+          className={`badge ${
+            user?.role === "admin"
+              ? "bg-danger"
+              : "bg-primary"
+          }`}
+        >
+          {user?.role}
+        </span>
+      </div>
+
+      <small className="text-secondary">
+        MENU
+      </small>
 
       <div className="list-group list-group-flush mt-2">
 
-        {/* Common Routes */}
+        {/* Dashboard */}
         <NavLink to="/" className={linkClass}>
           📊 Dashboard
         </NavLink>
 
-        {/* USER ROUTES */}
-        {user?.role === "user" && (
+        {/* USER MENU */}
+        {user?.role?.toLowerCase() === "user" && (
           <>
-            <NavLink to="/tasks" className={linkClass}>
+            <NavLink
+              to="/tasks"
+              className={linkClass}
+            >
               📋 My Tasks
             </NavLink>
           </>
         )}
 
-        {/* ADMIN ROUTES */}
-        {user?.role === "admin" && (
+        {/* ADMIN MENU */}
+        {user?.role?.toLowerCase() === "admin" && (
           <>
-            <NavLink to="/tasks" className={linkClass}>
+            <NavLink
+              to="/tasks"
+              className={linkClass}
+            >
               📋 All Tasks
             </NavLink>
 
-            <NavLink to="/add-task" className={linkClass}>
+            <NavLink
+              to="/add-task"
+              className={linkClass}
+            >
               ➕ Add Task
             </NavLink>
 
-            <NavLink to="/completed" className={linkClass}>
+            <NavLink
+              to="/completed"
+              className={linkClass}
+            >
               ✅ Completed Tasks
             </NavLink>
 
-            <NavLink to="/pending" className={linkClass}>
-              🟡 Pending Tasks
-            </NavLink>
-
-            <NavLink to="/in-progress" className={linkClass}>
-              🔵 In Progress Tasks
-            </NavLink>
-
-            <hr />
-
-            <small className="text-secondary">
-              Task Filters
-            </small>
-
             <NavLink
-              to="/tasks/month"
+              to="/pending"
               className={linkClass}
             >
-              📅 Tasks By Month
+              ⏳ Pending Tasks
             </NavLink>
 
             <NavLink
-              to="/tasks/status"
+              to="/in-progress"
               className={linkClass}
             >
-              🔍 Tasks By Status
+              🚀 In Progress
             </NavLink>
           </>
         )}
+
       </div>
     </div>
   );

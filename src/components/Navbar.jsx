@@ -3,33 +3,47 @@ import { useNavigate } from "react-router-dom";
 export default function Navbar() {
   const navigate = useNavigate();
 
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
   return (
-    <div className="d-flex justify-content-between align-items-center p-3 bg-white border-bottom">
+    <nav className="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 border-bottom">
+      <div className="container-fluid">
 
-      <h5 className="mb-0">Task Dashboard</h5>
+        {/* Logo / Title */}
+        <div>
+          <h4 className="fw-bold mb-0 text-primary">
+            📋 Task Management
+          </h4>
+          <small className="text-muted">
+            Welcome, {user?.name || "User"}
+          </small>
+        </div>
 
-      <div className="d-flex align-items-center gap-3">
+        {/* Right Side */}
+        <div className="d-flex align-items-center gap-2">
 
-        {/* PROFILE ICON */}
-        <button
-          className="btn btn-outline-primary btn-sm"
-          onClick={() => navigate("/profile")}
-        >
-          👤 Profile
-        </button>
+          <button
+            className="btn btn-outline-primary"
+            onClick={() => navigate("/profile")}
+          >
+            👤 Profile
+          </button>
 
-        {/* LOGOUT */}
-        <button
-          className="btn btn-outline-danger btn-sm"
-          onClick={() => {
-            localStorage.removeItem("token");
-            window.location.href = "/login";
-          }}
-        >
-          Logout
-        </button>
+          <button
+            className="btn btn-danger"
+            onClick={handleLogout}
+          >
+            🚪 Logout
+          </button>
 
+        </div>
       </div>
-    </div>
+    </nav>
   );
 }
