@@ -12,13 +12,24 @@ export default function Register() {
     contactNumber: "",
   });
 
+  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Handle Text Inputs
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
+  // Handle Image
+  const handleImageChange = (e) => {
+    setImage(e.target.files[0]);
+  };
+
+  // Handle Register
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -26,96 +37,155 @@ export default function Register() {
       setLoading(true);
       setError("");
 
-      await registerUser(form);
+      const formData = new FormData();
+
+      formData.append("name", form.name);
+      formData.append("email", form.email);
+      formData.append("password", form.password);
+      formData.append("contactNumber", form.contactNumber);
+
+      // Field name must match uploadImage.single("ImgPath")
+      formData.append("image", image);
+
+      await registerUser(formData);
 
       navigate("/login");
 
     } catch (err) {
       console.log(err);
-      setError(err?.response?.data?.msg || "Registration failed");
+      setError(err?.response?.data?.msg || "Registration Failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div className="container-fluid min-vh-100 d-flex justify-content-center align-items-center bg-light">
 
       <div className="col-md-5">
 
-        {/* CARD */}
         <div className="card shadow-lg border-0 rounded-4">
 
           <div className="card-body p-4">
 
-            {/* TITLE */}
-            <h3 className="text-center mb-2">📝 Register</h3>
+            <h3 className="text-center mb-2">
+              📝 Register
+            </h3>
+
             <p className="text-center text-muted mb-4">
-              Create your account to continue
+              Create your account
             </p>
 
-            {/* ERROR */}
             {error && (
-              <div className="alert alert-danger py-2">
+              <div className="alert alert-danger">
                 {error}
               </div>
             )}
 
-            {/* FORM */}
             <form onSubmit={handleSubmit}>
 
-              {/* NAME */}
+              {/* Name */}
               <div className="mb-3">
-                <label className="form-label">Name</label>
+                <label className="form-label">
+                  Name
+                </label>
+
                 <input
+                  type="text"
                   name="name"
                   className="form-control"
-                  placeholder="Enter your name"
+                  placeholder="Enter Name"
+                  value={form.name}
                   onChange={handleChange}
                   required
                 />
               </div>
 
-              {/* EMAIL */}
+              {/* Email */}
               <div className="mb-3">
-                <label className="form-label">Email</label>
+                <label className="form-label">
+                  Email
+                </label>
+
                 <input
                   type="email"
                   name="email"
                   className="form-control"
-                  placeholder="Enter email"
+                  placeholder="Enter Email"
+                  value={form.email}
                   onChange={handleChange}
                   required
                 />
               </div>
 
-              {/* PASSWORD */}
+              {/* Password */}
               <div className="mb-3">
-                <label className="form-label">Password</label>
+                <label className="form-label">
+                  Password
+                </label>
+
                 <input
                   type="password"
                   name="password"
                   className="form-control"
-                  placeholder="Create password"
+                  placeholder="Enter Password"
+                  value={form.password}
                   onChange={handleChange}
                   required
                 />
               </div>
 
-              {/* CONTACT */}
+              {/* Contact */}
               <div className="mb-3">
-                <label className="form-label">Contact Number</label>
+                <label className="form-label">
+                  Contact Number
+                </label>
+
                 <input
+                  type="text"
                   name="contactNumber"
                   className="form-control"
-                  placeholder="Enter contact number"
+                  placeholder="Enter Contact Number"
+                  value={form.contactNumber}
                   onChange={handleChange}
                   required
                 />
               </div>
 
-              {/* BUTTON */}
+              {/* Profile Picture */}
+              <div className="mb-3">
+                <label className="form-label">
+                  Profile Picture
+                </label>
+
+                <input
+                  type="file"
+                  className="form-control"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  required
+                />
+              </div>
+
+              {/* Image Preview */}
+              {image && (
+                <div className="text-center mb-3">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt="Preview"
+                    className="rounded-circle border"
+                    style={{
+                      width: "120px",
+                      height: "120px",
+                      objectFit: "cover",
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Register Button */}
               <button
+                type="submit"
                 className="btn btn-success w-100"
                 disabled={loading}
               >
@@ -124,17 +194,19 @@ export default function Register() {
 
             </form>
 
-            {/* FOOTER */}
             <div className="text-center mt-3">
               <small>
-                Already have an account? <a href="/login">Login</a>
+                Already have an account?{" "}
+                <a href="/login">Login</a>
               </small>
             </div>
 
           </div>
+
         </div>
 
       </div>
+
     </div>
   );
 }
