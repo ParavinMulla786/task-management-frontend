@@ -9,3 +9,11 @@ export const getAllUsers = () =>
 
 export const getTasksByUser = () =>
   api.get("/assign-task/get-tasks-by-user");
+
+export const updateUserInfo = (formData) => {
+  return api.put("/user/update", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
