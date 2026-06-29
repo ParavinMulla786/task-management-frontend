@@ -1,22 +1,47 @@
+import { useLocation } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import AppRoutes from "./routes/AppRoutes";
+import { useTheme } from "./context/ThemeContext";
 
 function App() {
+  const location = useLocation();
+  const { theme } = useTheme();
+
+  const isDark = theme === "dark";
+
+  const isAuthPage =
+    location.pathname === "/login" ||
+    location.pathname === "/register";
+
   return (
-    <div className="container-fluid">
-      <div className="row">
+    <div
+      className={`min-vh-100 ${
+        isDark ? "bg-dark text-light" : "bg-light text-dark"
+      }`}
+    >
 
-        {/* SIDEBAR (20-25%) */}
-        <div className="col-md-3 col-lg-2 bg-dark min-vh-100 p-0">
-          <Sidebar />
-        </div>
+      <div className="d-flex">
 
-        {/* MAIN CONTENT (75-80%) */}
-        <div className="col-md-9 col-lg-10 bg-light min-vh-100">
+        {/* SIDEBAR */}
+        {!isAuthPage && (
+          <div
+            style={{ width: "250px" }}
+            className={`min-vh-100 border-end ${
+              isDark ? "bg-dark" : "bg-white"
+            }`}
+          >
+            <Sidebar />
+          </div>
+        )}
 
-          <Navbar />
+        {/* MAIN AREA */}
+        <div className="flex-grow-1">
 
+          {/* NAVBAR */}
+          {!isAuthPage && <Navbar />}
+
+          {/* PAGE CONTENT */}
           <div className="p-3">
             <AppRoutes />
           </div>

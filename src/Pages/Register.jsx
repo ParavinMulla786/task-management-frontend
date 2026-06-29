@@ -159,12 +159,11 @@ export default function Register() {
                 </label>
 
                 <input
-                  type="file"
-                  className="form-control"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  required
-                />
+  type="file"
+  className="form-control"
+  accept="image/*"
+  onChange={handleImageChange}
+/>
               </div>
 
               {/* Image Preview */}

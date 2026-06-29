@@ -1,17 +1,21 @@
-export default function SearchBar({
-  value,
-  onChange,
-}) {
+import { useTheme } from "../context/ThemeContext";
+
+export default function SearchBar({ value, onChange }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
     <div className="position-relative">
+
+      {/* Input */}
       <input
         type="text"
-        className="form-control shadow-sm"
+        className={`form-control shadow-sm ${
+          isDark ? "bg-secondary text-light border-0" : ""
+        }`}
         placeholder="Search tasks by title or description..."
         value={value}
-        onChange={(e) =>
-          onChange(e.target.value)
-        }
+        onChange={(e) => onChange(e.target.value)}
         style={{
           borderRadius: "12px",
           paddingLeft: "40px",
@@ -19,6 +23,7 @@ export default function SearchBar({
         }}
       />
 
+      {/* Icon */}
       <span
         style={{
           position: "absolute",
@@ -26,7 +31,7 @@ export default function SearchBar({
           top: "50%",
           transform: "translateY(-50%)",
           fontSize: "18px",
-          color: "#6c757d",
+          color: isDark ? "#f8f9fa" : "#6c757d",
         }}
       >
         🔍

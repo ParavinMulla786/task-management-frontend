@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTheme } from "../context/ThemeContext";
 import { getAllUsers } from "../services/userService";
 import {
   deleteTask,
@@ -12,6 +13,7 @@ import {
   FaTrash,
   FaTimes,
   FaSave,
+  FaUser,
 } from "react-icons/fa";
 
 export default function TaskModal({
@@ -19,11 +21,16 @@ export default function TaskModal({
   onClose,
   isAdmin,
   refresh,
+  onUpdateTask, // 🔥 IMPORTANT (for instant UI sync)
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -43,177 +50,229 @@ export default function TaskModal({
 
   if (!task) return null;
 
-  // DELETE
+  // ✅ SAFE TASK ID (MySQL + Mongo support)
+  const getTaskId = () => task?.id || task?.task_id;
+
+  // 🔥 SAFE WRAPPER
+  const safeAction = async (fn) => {
+    try {
+      setLoading(true);
+      await fn();
+      await refresh(); // reload table
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔥 DELETE TASK
   const handleDelete = async () => {
     if (!window.confirm("Delete this task?")) return;
-    await deleteTask(task.id);
-    refresh();
-    onClose();
+
+    await safeAction(async () => {
+      await deleteTask(getTaskId());
+      onClose();
+    });
   };
 
-  // UPDATE
+  // 🔥 UPDATE TASK (EDIT MODE)
   const handleUpdate = async () => {
-    await updateTask(task.id, form);
-    setEditMode(false);
-    refresh();
+    await safeAction(async () => {
+      await updateTask(getTaskId(), form);
+      setEditMode(false);
+
+      // 🔥 instant UI sync
+      onUpdateTask?.({ ...task, ...form });
+    });
   };
 
-  // ASSIGN
+  // 🔥 STATUS UPDATE (IMPORTANT FIX)
+  const handleStatusUpdate = async (value) => {
+    setForm((prev) => ({ ...prev, status: value }));
+
+    await safeAction(async () => {
+      await updateTask(getTaskId(), { status: value });
+
+      // 🔥 instant UI sync (admin + user both)
+      onUpdateTask?.({
+        ...task,
+        status: value,
+      });
+    });
+  };
+
+  // 🔥 ASSIGN USER
   const handleAssign = async () => {
-    if (!selectedUser) return alert("Select user");
-    await assignTask(task.id, selectedUser);
-    alert("Task Assigned!");
-    setSelectedUser("");
+    if (!selectedUser) return alert("Please select a user");
+
+    await safeAction(async () => {
+      await assignTask(getTaskId(), selectedUser);
+      setSelectedUser("");
+
+      // optional sync
+      onUpdateTask?.({
+        ...task,
+        assignedUser: { id: selectedUser },
+      });
+    });
   };
 
-  const statusBadge =
-    task.status === "Completed"
-      ? "bg-success"
-      : task.status === "Pending"
-      ? "bg-warning text-dark"
-      : "bg-primary";
+  // 📊 UI DATA
+  const currentStatus = form.status || task.status;
+  const assignedUserName = task.assignedUser?.name || "Unassigned";
+
+  const start = new Date(task.startDate);
+  const end = new Date(task.endDate);
+  const today = new Date();
+
+  const totalDays = Math.max(1, Math.ceil((end - start) / 86400000));
+  const elapsedDays = Math.max(0, Math.ceil((today - start) / 86400000));
+
+  let progress = Math.min(100, (elapsedDays / totalDays) * 100);
+  if (currentStatus === "Completed") progress = 100;
 
   return (
     <div
       className="modal d-block"
       style={{ background: "rgba(0,0,0,0.6)" }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="modal-dialog modal-lg modal-dialog-centered">
-        <div className="modal-content shadow-lg rounded-4">
+      <div className="modal-dialog modal-md modal-dialog-centered">
+        <div className={`modal-content ${isDark ? "bg-dark text-light" : ""}`}>
 
           {/* HEADER */}
           <div className="modal-header">
-            <h5 className="fw-bold">📋 Task Details</h5>
+            <h5>📋 Task Details</h5>
             <button className="btn-close" onClick={onClose} />
           </div>
 
           {/* BODY */}
           <div className="modal-body">
 
-            {/* TITLE + DESCRIPTION */}
-            {!editMode ? (
+            {loading && <div className="spinner-border" />}
+
+            {!loading && (
               <>
-                <h4 className="fw-bold">{task.title}</h4>
-                <p className="text-muted">{task.description}</p>
-              </>
-            ) : (
-              <>
-                <input
-                  className="form-control mb-2"
-                  value={form.title || ""}
-                  onChange={(e) =>
-                    setForm({ ...form, title: e.target.value })
-                  }
-                />
+                {/* TITLE */}
+                {!editMode ? (
+                  <>
+                    <h5>{task.title}</h5>
+                    <p className="text-muted">{task.description}</p>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      className="form-control mb-2"
+                      value={form.title || ""}
+                      onChange={(e) =>
+                        setForm({ ...form, title: e.target.value })
+                      }
+                    />
+                    <textarea
+                      className="form-control"
+                      value={form.description || ""}
+                      onChange={(e) =>
+                        setForm({ ...form, description: e.target.value })
+                      }
+                    />
+                  </>
+                )}
 
-                <textarea
-                  className="form-control mb-2"
-                  value={form.description || ""}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      description: e.target.value,
-                    })
-                  }
-                />
-              </>
-            )}
-
-            <hr />
-
-            {/* INFO GRID */}
-            <div className="row">
-
-              <div className="col-md-6 mb-2">
-                <b>Status:</b>{" "}
-                <span className={`badge ${statusBadge}`}>
-                  {task.status}
+                {/* STATUS */}
+                <span className="badge bg-primary mt-2">
+                  {currentStatus}
                 </span>
-              </div>
 
-              <div className="col-md-6 mb-2">
-                <b>Start:</b> {task.startDate}
-              </div>
-
-              <div className="col-md-6 mb-2">
-                <b>End:</b> {task.endDate}
-              </div>
-
-              <div className="col-md-6 mb-2">
-                <b>Task ID:</b> #{task.id}
-              </div>
-
-            </div>
-
-            {/* ADMIN PANEL */}
-            {isAdmin && (
-              <>
-                <hr />
-
-                {/* ASSIGN USER */}
-                <select
-                  className="form-select mb-2"
-                  value={selectedUser}
-                  onChange={(e) =>
-                    setSelectedUser(e.target.value)
-                  }
-                >
-                  <option value="">👤 Assign User</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
-
-                {/* BUTTONS */}
-                <div className="d-flex gap-2 flex-wrap">
-
-                  {/* EDIT */}
-                  <button
-                    className="btn btn-warning"
-                    onClick={() => setEditMode(!editMode)}
-                  >
-                    <FaEdit /> Edit
-                  </button>
-
-                  {/* SAVE */}
-                  {editMode && (
-                    <button
-                      className="btn btn-success"
-                      onClick={handleUpdate}
-                    >
-                      <FaSave /> Save
-                    </button>
-                  )}
-
-                  {/* ASSIGN */}
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleAssign}
-                  >
-                    <FaUserPlus /> Assign
-                  </button>
-
-                  {/* DELETE */}
-                  <button
-                    className="btn btn-danger"
-                    onClick={handleDelete}
-                  >
-                    <FaTrash /> Delete
-                  </button>
-
+                {/* USER */}
+                <div className="mt-2">
+                  <FaUser /> {assignedUserName}
                 </div>
+
+                {/* PROGRESS */}
+                <div className="mt-3">
+                  <div className="progress">
+                    <div
+                      className="progress-bar"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* USER STATUS */}
+                {!isAdmin && (
+                  <select
+                    className="form-select mt-3"
+                    value={currentStatus}
+                    onChange={(e) => handleStatusUpdate(e.target.value)}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                )}
+
+                {/* ADMIN */}
+                {isAdmin && (
+                  <>
+                    {/* ASSIGN USER */}
+                    <div className="mt-3 d-flex gap-2">
+                      <select
+                        className="form-select"
+                        value={selectedUser}
+                        onChange={(e) => setSelectedUser(e.target.value)}
+                      >
+                        <option value="">Assign user</option>
+                        {users.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleAssign}
+                      >
+                        <FaUserPlus />
+                      </button>
+                    </div>
+
+                    {/* ACTIONS */}
+                    <div className="mt-3 d-flex gap-2">
+                      <button
+                        className="btn btn-warning"
+                        onClick={() => setEditMode(!editMode)}
+                      >
+                        <FaEdit />
+                      </button>
+
+                      <button
+                        className="btn btn-danger"
+                        onClick={handleDelete}
+                      >
+                        <FaTrash />
+                      </button>
+
+                      {editMode && (
+                        <button
+                          className="btn btn-success"
+                          onClick={handleUpdate}
+                        >
+                          <FaSave />
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
 
           {/* FOOTER */}
           <div className="modal-footer">
-            <button
-              className="btn btn-secondary"
-              onClick={onClose}
-            >
+            <button className="btn btn-secondary" onClick={onClose}>
               <FaTimes /> Close
             </button>
           </div>

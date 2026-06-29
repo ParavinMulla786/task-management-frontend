@@ -1,0 +1,141 @@
+/* =========================
+   BASE LIGHT THEME
+========================= */
+body {
+  background-color: #f8f9fa;
+  color: #212529;
+  transition: all 0.3s ease;
+}
+
+/* =========================
+   DARK THEME ROOT
+========================= */
+body[data-theme="dark"] {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+/* =========================
+   CARDS
+========================= */
+body[data-theme="dark"] .card {
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border-color: #2a2a2a;
+}
+
+/* =========================
+   NAVBAR
+========================= */
+body[data-theme="dark"] .navbar {
+  background-color: #1a1a1a !important;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+/* =========================
+   TABLES (IMPORTANT FIX)
+========================= */
+body[data-theme="dark"] .table {
+  color: #ffffff;
+  background-color: #1e1e1e;
+}
+
+body[data-theme="dark"] .table thead {
+  background-color: #2a2a2a !important;
+  color: #ffffff;
+}
+
+body[data-theme="dark"] .table td,
+body[data-theme="dark"] .table th {
+  border-color: #333 !important;
+}
+
+body[data-theme="dark"] .table-hover tbody tr:hover {
+  background-color: #2a2a2a !important;
+}
+
+/* =========================
+   MODALS
+========================= */
+body[data-theme="dark"] .modal-content {
+  background-color: #1e1e1e;
+  color: white;
+  border: 1px solid #333;
+}
+
+/* =========================
+   FORMS (VERY IMPORTANT)
+========================= */
+body[data-theme="dark"] .form-control {
+  background-color: #2a2a2a;
+  color: #ffffff;
+  border: 1px solid #444;
+}
+
+body[data-theme="dark"] .form-control:focus {
+  background-color: #2a2a2a;
+  color: #ffffff;
+  border-color: #0d6efd;
+  box-shadow: none;
+}
+
+body[data-theme="dark"] .form-select {
+  background-color: #2a2a2a;
+  color: #ffffff;
+  border: 1px solid #444;
+}
+
+/* =========================
+   TEXT MUTED FIX
+========================= */
+body[data-theme="dark"] .text-muted {
+  color: #b5b5b5 !important;
+}
+
+/* =========================
+   BUTTON FIXES
+========================= */
+body[data-theme="dark"] .btn-outline-secondary {
+  color: #ffffff;
+  border-color: #666;
+}
+
+body[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: #444;
+}
+
+/* =========================
+   BADGES IMPROVEMENT (OPTIONAL)
+========================= */
+body[data-theme="dark"] .badge {
+  opacity: 0.95;
+}
+
+/* =========================
+   SMOOTH TRANSITIONS
+========================= */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+
+.bg-purple {
+  background: linear-gradient(135deg, #6f42c1, #8e44ad);
+  color: white;
+}
+
+
+.bg-purple {
+  background: linear-gradient(135deg, #6f42c1, #8e44ad);
+  color: white;
+}
+
+/* Optional: nicer hover effect */
+.stat-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
