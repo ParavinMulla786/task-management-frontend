@@ -21,7 +21,7 @@ export default function TaskModal({
   onClose,
   isAdmin,
   refresh,
-  onUpdateTask, // 🔥 IMPORTANT (for instant UI sync)
+  onUpdateTask,
 }) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -32,19 +32,25 @@ export default function TaskModal({
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(false);
 
+  // ✅ Safer task initialization sync without clobbering live typing state
   useEffect(() => {
     if (task) {
-      setForm(task);
+      setForm({
+        title: task.title || "",
+        description: task.description || "",
+        status: task.status || "Pending",
+        ...task,
+      });
       if (isAdmin) loadUsers();
     }
-  }, [task]);
+  }, [task, isAdmin]);
 
   const loadUsers = async () => {
     try {
       const res = await getAllUsers();
       setUsers(res?.data?.data || []);
     } catch (err) {
-      console.log(err);
+      console.error("User load failed:", err);
     }
   };
 
@@ -58,7 +64,7 @@ export default function TaskModal({
     try {
       setLoading(true);
       await fn();
-      await refresh(); // reload table
+      await refresh?.(); // reload table
     } catch (err) {
       console.error(err);
       alert("Something went wrong!");
@@ -88,7 +94,7 @@ export default function TaskModal({
     });
   };
 
-  // 🔥 STATUS UPDATE (IMPORTANT FIX)
+  // 🔥 STATUS UPDATE
   const handleStatusUpdate = async (value) => {
     setForm((prev) => ({ ...prev, status: value }));
 
@@ -111,10 +117,10 @@ export default function TaskModal({
       await assignTask(getTaskId(), selectedUser);
       setSelectedUser("");
 
-      // optional sync
+      // Instant UI update
       onUpdateTask?.({
         ...task,
-        assignedUser: { id: selectedUser },
+        assignedUser: users.find((u) => u.id === selectedUser) || { id: selectedUser },
       });
     });
   };
@@ -127,8 +133,15 @@ export default function TaskModal({
   const end = new Date(task.endDate);
   const today = new Date();
 
-  const totalDays = Math.max(1, Math.ceil((end - start) / 86400000));
-  const elapsedDays = Math.max(0, Math.ceil((today - start) / 86400000));
+  const validDates = !isNaN(start) && !isNaN(end) && end > start;
+
+  const totalDays = validDates
+    ? Math.max(1, Math.ceil((end - start) / 86400000))
+    : 1;
+
+  const elapsedDays = validDates
+    ? Math.max(0, Math.ceil((today - start) / 86400000))
+    : 0;
 
   let progress = Math.min(100, (elapsedDays / totalDays) * 100);
   if (currentStatus === "Completed") progress = 100;
@@ -145,13 +158,17 @@ export default function TaskModal({
           {/* HEADER */}
           <div className="modal-header">
             <h5>📋 Task Details</h5>
-            <button className="btn-close" onClick={onClose} />
+            <button className="btn-close" onClick={onClose} disabled={loading} />
           </div>
 
           {/* BODY */}
           <div className="modal-body">
 
-            {loading && <div className="spinner-border" />}
+            {loading && (
+              <div className="d-flex justify-content-center my-3">
+                <div className="spinner-border" />
+              </div>
+            )}
 
             {!loading && (
               <>
@@ -213,7 +230,7 @@ export default function TaskModal({
                   </select>
                 )}
 
-                {/* ADMIN */}
+                {/* ADMIN CONTROLS */}
                 {isAdmin && (
                   <>
                     {/* ASSIGN USER */}
@@ -234,6 +251,7 @@ export default function TaskModal({
                       <button
                         className="btn btn-primary"
                         onClick={handleAssign}
+                        disabled={loading}
                       >
                         <FaUserPlus />
                       </button>
@@ -244,6 +262,7 @@ export default function TaskModal({
                       <button
                         className="btn btn-warning"
                         onClick={() => setEditMode(!editMode)}
+                        disabled={loading}
                       >
                         <FaEdit />
                       </button>
@@ -251,6 +270,7 @@ export default function TaskModal({
                       <button
                         className="btn btn-danger"
                         onClick={handleDelete}
+                        disabled={loading}
                       >
                         <FaTrash />
                       </button>
@@ -259,6 +279,7 @@ export default function TaskModal({
                         <button
                           className="btn btn-success"
                           onClick={handleUpdate}
+                          disabled={loading}
                         >
                           <FaSave />
                         </button>
@@ -272,7 +293,11 @@ export default function TaskModal({
 
           {/* FOOTER */}
           <div className="modal-footer">
-            <button className="btn btn-secondary" onClick={onClose}>
+            <button
+              className="btn btn-secondary"
+              onClick={onClose}
+              disabled={loading}
+            >
               <FaTimes /> Close
             </button>
           </div>

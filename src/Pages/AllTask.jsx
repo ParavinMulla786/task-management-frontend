@@ -118,6 +118,28 @@ export default function AllTasks() {
     filteredTasks.map((t, i) => `${t?.id || t?.task_id}-${i}`)
   );
 
+
+  const highlightText = (text = "", search = "") => {
+  if (!search) return text;
+
+  const regex = new RegExp(`(${search})`, "gi");
+  const parts = text.split(regex);
+
+  return parts.map((part, index) =>
+    part.toLowerCase() === search.toLowerCase() ? (
+      <span
+        key={index}
+        className="bg-warning text-dark px-1 rounded"
+      >
+        {part}
+      </span>
+    ) : (
+      part
+    )
+  );
+};
+
+
   return (
     <div className={`container py-3 ${isDark ? "text-light" : "text-dark"}`}>
 
@@ -167,8 +189,8 @@ export default function AllTasks() {
               <tr key={getTaskKey(task, index)}>
                 <td>{index + 1}</td>
 
-                <td>{task?.title}</td>
-                <td>{task?.status}</td>
+                <td>{highlightText(task?.title, search)}</td>
+           <td>{highlightText(task?.status, search)}</td>
 
                 <td>
                   {task?.startDate
