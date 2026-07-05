@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import StatCard from "../components/StatCard";
 import { useTheme } from "../context/ThemeContext";
 
@@ -19,9 +18,11 @@ import {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { theme } = useTheme();
+
   const isDark = theme === "dark";
 
   const user = JSON.parse(localStorage.getItem("user"));
+
   const isAdmin = user?.role?.toLowerCase() === "admin";
 
   const [stats, setStats] = useState({
@@ -40,34 +41,35 @@ export default function Dashboard() {
   }, []);
 
   const loadDashboard = async () => {
+    setLoading(true);
+    setError("");
+
     try {
-      setLoading(true);
-      setError("");
-
       if (!isAdmin) {
-        const res = await getTasksByUser();
+        const response = await getTasksByUser();
 
-        const assignedTasks = res?.data?.getTasks || [];
-        const tasks = assignedTasks.map((item) => item.Task);
+        const assignedTasks = response?.data?.getTasks || [];
+
+        const tasks = assignedTasks
+          .map((item) => item.task)
+          .filter(Boolean);
 
         setStats({
           total: tasks.length,
-          pending: tasks.filter((t) => t.status === "Pending").length,
-          progress: tasks.filter((t) => t.status === "In Progress").length,
-          completed: tasks.filter((t) => t.status === "Completed").length,
+          pending: tasks.filter((task) => task.status === "Pending").length,
+          progress: tasks.filter(
+            (task) => task.status === "In Progress"
+          ).length,
+          completed: tasks.filter(
+            (task) => task.status === "Completed"
+          ).length,
           users: 0,
         });
 
         return;
       }
 
-      const [
-        allTasksRes,
-        pendingTasksRes,
-        progressTasksRes,
-        completedTasksRes,
-        usersRes,
-      ] = await Promise.all([
+      const results = await Promise.allSettled([
         getAllTasks(),
         getPending(),
         getInProgress(),
@@ -75,17 +77,51 @@ export default function Dashboard() {
         getAllUsers(),
       ]);
 
-      setStats({
-        total: allTasksRes?.data?.data?.length || 0,
-        pending: pendingTasksRes?.data?.data?.length || 0,
-        progress: progressTasksRes?.data?.data?.length || 0,
-        completed: completedTasksRes?.data?.data?.length || 0,
-        users: usersRes?.data?.data?.length || 0,
+      const allTasks =
+        results[0].status === "fulfilled"
+          ? results[0].value?.data?.data || []
+          : [];
+
+      const pending =
+        results[1].status === "fulfilled"
+          ? results[1].value?.data?.data || []
+          : [];
+
+      const progress =
+        results[2].status === "fulfilled"
+          ? results[2].value?.data?.data || []
+          : [];
+
+      const completed =
+        results[3].status === "fulfilled"
+          ? results[3].value?.data?.data || []
+          : [];
+
+      const users =
+        results[4].status === "fulfilled"
+          ? results[4].value?.data?.data || []
+          : [];
+
+      results.forEach((result, index) => {
+        if (result.status === "rejected") {
+          console.error(`API ${index + 1} Failed:`, result.reason);
+        }
       });
 
-    } catch (error) {
-      console.log("Dashboard Error:", error);
-      setError("Failed to load dashboard data");
+      setStats({
+        total: allTasks.length,
+        pending: pending.length,
+        progress: progress.length,
+        completed: completed.length,
+        users: users.length,
+      });
+    } catch (err) {
+      console.error("Dashboard Error:", err);
+
+      setError(
+        err?.response?.data?.message ||
+          "Failed to load dashboard data."
+      );
     } finally {
       setLoading(false);
     }
@@ -94,7 +130,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="text-center py-5">
-        <div className="spinner-border text-primary mb-2" />
+        <div className="spinner-border text-primary mb-3"></div>
         <h5 className={isDark ? "text-light" : ""}>
           Loading Dashboard...
         </h5>
@@ -108,18 +144,14 @@ export default function Dashboard() {
         isDark ? "text-light" : "text-dark"
       }`}
     >
-
-      {/* ERROR */}
       {error && (
-        <div className="alert alert-danger py-2">
+        <div className="alert alert-danger">
           {error}
         </div>
       )}
 
-      {/* HEADER */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-
-        <h3 className="fw-bold m-0">
+        <h3 className="fw-bold">
           {isAdmin ? "📊 Admin Dashboard" : "📊 My Dashboard"}
         </h3>
 
@@ -133,14 +165,12 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* EMPTY STATE */}
-      {stats.total === 0 && !isAdmin ? (
+      {!isAdmin && stats.total === 0 ? (
         <div className="text-center py-5">
-          <h5>No tasks assigned yet</h5>
+          <h5>No tasks assigned yet.</h5>
         </div>
       ) : (
         <div className="row g-3">
-
           <StatCard
             title={isAdmin ? "Total Tasks" : "My Tasks"}
             count={stats.total}
@@ -169,7 +199,6 @@ export default function Dashboard() {
             icon="✅"
           />
 
-          {/* 🔥 USERS CARD - SPECIAL COLOR */}
           {isAdmin && (
             <StatCard
               title="Users"
@@ -178,7 +207,6 @@ export default function Dashboard() {
               icon="👥"
             />
           )}
-
         </div>
       )}
     </div>

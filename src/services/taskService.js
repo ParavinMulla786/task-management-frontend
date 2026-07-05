@@ -13,12 +13,19 @@ export const getTaskById = (id) =>
   api.get(`/task/getTask/${id}`);
 
 // ---------------- UPDATE ----------------
-export const updateTask = (id, data) =>
-  api.put(`/task/updateTask/${id}`, data);
+export const updateTask = async (taskId, data) => {
+  const response = await api.put(`/task/updateTask/${taskId}`, data);
+  return response;
+};
 
 // ---------------- STATUS UPDATE ----------------
-export const updateStatus = (id, status) =>
-  api.patch(`/task/updateStatus/${id}`, { status });
+export const updateStatus = async (taskId, status) => {
+  const response = await api.put(`/task/updateTask/${taskId}`, {
+    status,
+  });
+
+  return response;
+};
 
 // ---------------- DELETE ----------------
 export const deleteTask = (id) =>
@@ -40,22 +47,29 @@ export const getByStatus = (status) =>
 export const getByMonth = (month) =>
   api.get(`/task/gettasksbyselectedmonth?month=${month}`);
 
-
-export const assignTask = (taskID, userID) => {
-  console.log("ASSIGN API HIT", taskID, userID);
-
-  return api.post("/assign-task/assign-task", {
-    taskID,
-    userID,
-  });
-};
-  // USERS
-
-
-// taskService.js
-
-// GET TASKS ASSIGNED TO LOGGED-IN USER
+// ---------------- USER TASKS ----------------
 export const getTasksByUser = () =>
   api.get("/assign-task/get-tasks-by-user");
 
+// ---------------- ASSIGN TASK ----------------
+export const assignTask = async (taskId, userId) => {
+  const response = await api.post("/assign-task/assign", {
+    taskID: taskId,
+    userID: userId,
+  });
 
+  return response;
+};
+
+// ---------------- UNASSIGN TASK ----------------
+// Create this API later in backend
+export const unassignTask = async (taskId, userId) => {
+  const response = await api.delete("/assign-task/unassign", {
+    data: {
+      taskID: taskId,
+      userID: userId,
+    },
+  });
+
+  return response;
+};
