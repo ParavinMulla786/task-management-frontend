@@ -333,6 +333,7 @@ export default function AllTasks() {
           )}
         </tbody>
       </table>
+      {/* table */}
 
       {selectedTask && (
         <TaskModal
